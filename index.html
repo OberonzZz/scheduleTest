@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+body {
+    margin: 0;
+    background: #4a4a4a;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+/* ========================================================= */
+/*                       MAIN HEADER BAR                     */
+/* ========================================================= */
+
+.header {
+    background: #b4e470;
+    padding: 15px;
+    font-size: 32px;
+    font-weight: bold;
+    text-align: center;
+    color: black;
+    position: relative;         /* allows absolute positioning inside */
+}
+
+/* Time + Date box in top-right of the header */
+.header-info {
+    position: absolute;
+    right: 20px;               /* distance from right side */
+    top: 50%;
+    transform: translateY(-50%);
+
+    text-align: right;
+    font-size: 18px;
+    color: black;
+    font-weight: bold;
+}
+
+.header-info #clock {
+    font-size: 30px;
+    margin: 0;
+    padding: 0;
+}
+
+.header-info #date {
+    font-size: 14px;
+    margin: 0;
+    line-height: 16px;
+}
+
+/* ========================================================= */
+/*                  PAGE LAYOUT (TABLES + SIDEBAR)           */
+/* ========================================================= */
+
+.container {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    height: calc(100vh - 100px);
+    box-sizing: border-box;
+}
+
+/* Left tables */
+.schedule-grid {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========================================================= */
+/*                   MON–SUN HEADER TABLE                    */
+/* ========================================================= */
+
+.day-header {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.day-header th {
+    background: #5f5f5f;
+    border: 1px solid #333;
+    font-size: 22px;
+    height: 55px;
+    text-align: center;
+    font-weight: bold;
+    color: white;
+    width: calc(100% / 7);
+}
+
+/* ========================================================= */
+/*                     MAIN GRID (7 × 5)                     */
+/* ========================================================= */
+
+.main-grid {
+    width: 100%;
+    border-collapse: collapse;
+    background: #555;
+    flex-grow: 1;
+    table-layout: fixed;
+}
+
+.main-grid td {
+    border: 1px solid #333;
+    text-align: center;
+    font-size: 20px;
+    width: calc(100% / 7);
+    /* use 5 rows total */
+    height: calc((100% - 55px) / 5);
+    color: white;
+}
+
+/* Clickable cell styling and small sub-elements
+   NOTE: avoid changing the table cell display type so the table layout
+   (column widths and alignment) matches the Mon–Sun header. Keep the
+   td as a table-cell; only add padding/visual styles here. */
+.clickable-cell {
+    cursor: pointer;
+    padding: 6px 4px;
+    vertical-align: middle; /* keep content centered with table row */
+    text-align: center;
+}
+
+/* time and subject are stacked visually but keep normal block flow */
+.cell-time {
+    display: block;
+    font-size: 14px;
+    color: #ddd;
+    line-height: 1;
+}
+
+.cell-subject {
+    display: block;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    line-height: 1.1;
+}
+
+/* ========================================================= */
+/*                        RIGHT SIDEBAR                      */
+/* ========================================================= */
+
+.side-panel {
+    flex: 1;
+    background: #777;
+    padding: 15px;
+    border-radius: 5px;
+    text-align: center;
+    color: black;
+    display: flex;
+    flex-direction: column;
+}
+
+#today-box {
+    background: white;
+    flex-grow: 1;
+    width: 100%;
+    border-radius: 5px;
+}
+
+/* Highlight the active (current) day column and header */
+.day-header th.day-active {
+    background: #6fbf5a; /* greenish */
+    color: #062006;
+}
+
+.main-grid td.col-active {
+    background: #84d17a; /* lighter green */
+    color: #062006;
+}
+
+/* modal removed — no modal styles */
+
+/* Breadcrumbs (hidden by default; shown on small portrait screens) */
+.breadcrumbs {
+    display: none;
+    gap: 8px;
+    padding: 8px 6px;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+.breadcrumbs button {
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.12);
+    padding: 6px 10px;
+    border-radius: 16px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #062006;
+}
+.breadcrumbs button.active {
+    background: #6fbf5a;
+    color: #062006;
+    font-weight: bold;
+}
+
+/* Responsive: on narrow portrait devices, hide the big grid and show breadcrumbs + side panel full width */
+@media (max-width: 700px) and (orientation: portrait) {
+    .container { flex-direction: column; height: auto; }
+    .schedule-grid, .day-header { display: none !important; }
+    .side-panel { flex: none; width: 100%; }
+    .breadcrumbs { display: flex; }
+    /* make side-panel take most of viewport height for usability */
+    #today-box { max-height: 60vh; overflow-y: auto; }
+    .header-info { display: none; } /* simplify header area on small phones */
+}
+    </style>
+    <title>BSIT THIRD YEAR SCHEDULE (2nd SEM)</title>
+</head>
+
+<body>
+    <div class="header">BSIT THIRD YEAR SCHEDULE (2nd SEM)
+        <div class="header-info">
+        <div id="clock">00:00</div>
+        <div id="date">Loading date...</div>
+    </div>
+    </div>
+    
+    <div class="container">
+        <div class="schedule-grid">
+
+            <!-- HEADER TABLE (Mon–Sun) -->
+            <table class="day-header">
+                <tr>
+                    <th>Monday</th>
+                    <th>Tuesday</th>
+                    <th>Wednesday</th>
+                    <th>Thursday</th>
+                    <th>Friday</th>
+                    <th>Saturday</th>
+                    <th>Sunday</th>
+                </tr>
+            </table>
+
+            <!-- MAIN GRID (7 columns × 8 rows) -->
+            <table class="main-grid">
+                <tr>
+                    <td>
+                        <div class="cell-time">2:30pm - 4:30pm</div>
+                        <div class="cell-subject">Networking 2</div>
+                    </td>
+                    <td></td>
+                    <td>
+                        <div class="cell-time">10:30am - 12:30pm</div>
+                        <div class="cell-subject">Platform Technology</div>
+                    </td>
+                    <td>
+                        <div class="cell-time">8:30am - 10:30am</div>
+                        <div class="cell-subject">Servant Leadership 2</div>
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="cell-time">4:30pm - 6:30pm</div>
+                        <div class="cell-subject">Integration and Architecture 2</div>
+                    </td>
+                    <td></td>
+                    <td>
+                        <div class="cell-time">12:30pm - 2:30pm</div>
+                        <div class="cell-subject">IT Elective 4</div>
+                    </td>
+                    <td>
+                        <div class="cell-time">10:30am - 12:30pm</div>
+                        <div class="cell-subject">Web System Technologies</div>
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <div class="cell-time">2:30pm - 4:30pm</div>
+                        <div class="cell-subject">IT Elective 5</div>
+                    </td>
+                    <td>
+                        <div class="cell-time">12:30pm - 2:30pm</div>
+                        <div class="cell-subject">Ethics</div>
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+
+        </div>
+
+        <div class="side-panel">
+
+            <!-- Breadcrumbs shown on small/portrait screens to pick a day -->
+            <nav id="breadcrumbs" class="breadcrumbs" aria-label="Days navigation"></nav>
+
+            <h2>Schedule For Today</h2>
+            <div id="today-box"></div>
+        </div>
+    </div>
+
+            <script>
+        // Inlined sched.js
+        function updateTime() {
+            const now = new Date();
+
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            let ampm = hours >= 12 ? "PM" : "AM";
+
+   
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+
+   
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+
+   
+            document.getElementById("clock").textContent = `${hours}:${minutes} ${ampm}`;
+
+ 
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById("date").textContent = now.toLocaleDateString(undefined, options);
+        }
+
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Time helpers (support single times and ranges)
+        function parseTimeTo24(input) {
+            if (!input) return '';
+            input = String(input).trim();
+            // If it's a range with '-'
+            if (input.includes('-')) {
+                const parts = input.split('-').map(p => p.trim());
+                const a = parseTimeTo24(parts[0]);
+                const b = parseTimeTo24(parts[1]);
+                if (a && b) return `${a}-${b}`;
+                return '';
+            }
+
+            // already HH:MM (24h) or H:MM
+            const hhmm24 = input.match(/^(\d{1,2}):(\d{2})$/);
+            if (hhmm24) {
+                let h = Number(hhmm24[1]);
+                let m = hhmm24[2];
+                const hh = h < 10 ? '0' + h : String(h);
+                return `${hh}:${m}`;
+            }
+            // AM/PM formats like "9:00 AM" or "09:00PM"
+            const ampm = input.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+            if (ampm) {
+                let h = Number(ampm[1]);
+                const m = ampm[2];
+                const isPM = /PM/i.test(ampm[3]);
+                if (isPM && h !== 12) h += 12;
+                if (!isPM && h === 12) h = 0;
+                const hh = h < 10 ? '0' + h : String(h);
+                return `${hh}:${m}`;
+            }
+            return '';
+        }
+
+        function format24To12(hhmm) {
+            if (!hhmm) return '';
+            if (hhmm.includes('-')) {
+                const parts = hhmm.split('-').map(p => p.trim());
+                const left = format24To12(parts[0]);
+                const right = format24To12(parts[1]);
+                return `${left} - ${right}`;
+            }
+            const m = hhmm.match(/^(\d{1,2}):(\d{2})$/);
+            if (!m) return hhmm;
+            let h = Number(m[1]);
+            const min = m[2];
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12;
+            h = h === 0 ? 12 : h;
+            return `${h}:${min} ${ampm}`;
+        }
+
+        // Fetch schedules from the backend API and show a summary in the side panel.
+        async function loadSchedules() {
+            // wrapper kept for compatibility
+            await loadAndRenderAll();
+        }
+
+        // Persistence: save/read schedules from localStorage so edits survive reloads
+        function persistAllToLocal() {
+            try {
+                const cells = Array.from(document.querySelectorAll('.main-grid td'));
+                const items = [];
+                cells.forEach(td => {
+                    const col = td.dataset.col;
+                    const row = td.dataset.row;
+                    const time = td.querySelector('.cell-time')?.textContent || '';
+                    const subject = td.querySelector('.cell-subject')?.textContent || '';
+                    if (time || subject) items.push({ col, row, time, subject });
+                });
+                localStorage.setItem('schedules_v1', JSON.stringify(items));
+            } catch (e) {
+                console.warn('persist failed', e);
+            }
+        }
+
+        function restoreFromLocal() {
+            try {
+                const raw = localStorage.getItem('schedules_v1');
+                if (!raw) return;
+                const items = JSON.parse(raw);
+                items.forEach(it => {
+                    const td = document.querySelector(`.main-grid td[data-col="${it.col}"][data-row="${it.row}"]`);
+                    if (!td) return;
+                    td.querySelector('.cell-time').textContent = it.time || '';
+                    td.querySelector('.cell-subject').textContent = it.subject || '';
+                });
+            } catch (e) {
+                console.warn('restore failed', e);
+            }
+        }
+        // Map short day strings used in DB to column index
+        const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        // Full names for display and breadcrumbs
+        const FULL_DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+        // Optional override for which day the side-panel should show (used by breadcrumbs on small screens)
+        let overrideDay = null; // short name like 'Mon'
+
+        function shortToFull(shortName) {
+            const idx = DAY_NAMES.indexOf(String(shortName));
+            if (idx === -1) return shortName || '';
+            return FULL_DAY_NAMES[idx];
+        }
+
+        function setActiveBreadcrumb(dayShort) {
+            const nav = document.getElementById('breadcrumbs');
+            if (!nav) return;
+            const buttons = Array.from(nav.querySelectorAll('button'));
+            buttons.forEach(b => b.classList.toggle('active', b.dataset.day === dayShort));
+        }
+
+
+
+        function initGrid() {
+            const table = document.querySelector('.main-grid');
+            if (!table) return;
+
+            // attach click handlers and set data-col/data-row for all cells
+            const rows = Array.from(table.rows);
+            rows.forEach((tr, rIdx) => {
+                const cells = Array.from(tr.cells);
+                cells.forEach((td, cIdx) => {
+                    td.dataset.col = cIdx; // 0..6
+                    td.dataset.row = rIdx; // 0..7 (now 8 rows)
+                    // ensure cell has the expected inner structure for time/subject
+                    if (!td.querySelector('.cell-time') && !td.querySelector('.cell-subject')) {
+                        td.innerHTML = '<div class="cell-time"></div><div class="cell-subject"></div>';
+                    }
+                });
+            });
+        }
+
+        // Highlight the current day column and header. Will be called on load and periodically.
+        let _currentDayIndex = null;
+        function highlightCurrentDay() {
+            const d = new Date();
+            const jsDay = d.getDay(); // 0=Sun,1=Mon...
+            const dayIndex = jsDay === 0 ? 6 : jsDay - 1; // map to 0..6 (Mon..Sun)
+            if (dayIndex === _currentDayIndex) return; // no change
+            _currentDayIndex = dayIndex;
+
+            // update header
+            const ths = Array.from(document.querySelectorAll('.day-header th'));
+            ths.forEach((th, i) => th.classList.toggle('day-active', i === dayIndex));
+
+            // update grid column cells
+            const table = document.querySelector('.main-grid');
+            if (!table) return;
+            for (let r = 0; r < table.rows.length; r++) {
+                for (let c = 0; c < table.rows[r].cells.length; c++) {
+                    const td = table.rows[r].cells[c];
+                    if (!td) continue;
+                    td.classList.toggle('col-active', c === dayIndex);
+                }
+            }
+        }
+
+        // Check for day change every minute and update highlight
+        setInterval(highlightCurrentDay, 60 * 1000);
+        // run once immediately
+        highlightCurrentDay();
+
+        // Render schedules into the grid cells. Simple algorithm: place each schedule into the first empty cell in that day's column.
+        function renderSchedulesInGrid(schedules) {
+            const table = document.querySelector('.main-grid');
+            if (!table) return;
+
+            // Clear existing cells
+            const cells = Array.from(table.querySelectorAll('td'));
+            cells.forEach(td => {
+                td.dataset.id = '';
+                td.querySelector('.cell-time').textContent = '';
+                td.querySelector('.cell-subject').textContent = '';
+            });
+
+            schedules.forEach(s => {
+                const col = DAY_NAMES.indexOf(String(s.day));
+                if (col === -1) return; // unknown day
+                // find first empty cell in this column
+                for (let r = 0; r < table.rows.length; r++) {
+                    const td = table.rows[r].cells[col];
+                    if (td && !td.dataset.id) {
+                        td.dataset.id = s.id || s.ID || s.Id || '' + (s.id || s.ID || s.Id || '');
+                        // Display time in 12-hour format even if DB stores HH:MM
+                        td.querySelector('.cell-time').textContent = format24To12(parseTimeTo24(s.time) || s.time || '');
+                        td.querySelector('.cell-subject').textContent = s.title || '';
+                        break;
+                    }
+                }
+            });
+        }
+
+        // Load schedules from the DOM (or from localStorage) and render the side-panel
+        async function loadAndRenderAll() {
+            try {
+                // restore any persisted edits first
+                restoreFromLocal();
+
+                // collect schedules from the table DOM
+                const table = document.querySelector('.main-grid');
+                if (!table) return;
+                const schedules = [];
+                for (let r = 0; r < table.rows.length; r++) {
+                    for (let c = 0; c < table.rows[r].cells.length; c++) {
+                        const td = table.rows[r].cells[c];
+                        if (!td) continue;
+                        const time = td.querySelector('.cell-time')?.textContent?.trim() || '';
+                        const title = td.querySelector('.cell-subject')?.textContent?.trim() || '';
+                        if (time || title) {
+                            schedules.push({ day: DAY_NAMES[c], time, title, col: c, row: r });
+                        }
+                    }
+                }
+
+                // Update today box (respect overrideDay if set by breadcrumbs)
+                const jsDay = new Date().getDay(); // 0=Sun,1=Mon...
+                const todayShort = overrideDay || (jsDay === 0 ? 'Sun' : DAY_NAMES[jsDay - 1]);
+                const todayList = schedules.filter(s => String(s.day) === String(todayShort));
+                const box = document.getElementById('today-box');
+                if (!box) return;
+                box.innerHTML = '';
+                const heading = document.createElement('h3');
+                heading.textContent = `Schedule for ${shortToFull(todayShort) || 'Today'}`;
+                box.appendChild(heading);
+
+                if (todayList.length === 0) {
+                    const p = document.createElement('p');
+                    p.textContent = 'No schedule for today.';
+                    box.appendChild(p);
+                } else {
+                    const ul = document.createElement('ul');
+                    todayList.forEach(s => {
+                        const li = document.createElement('li');
+                        li.textContent = `${s.time} — ${s.title}`;
+                        ul.appendChild(li);
+                    });
+                    box.appendChild(ul);
+                }
+            } catch (err) {
+                console.error('loadAndRenderAll error', err);
+            }
+        }
+
+        // Initialize grid handlers then fetch data once after DOM is ready
+        window.addEventListener('load', () => {
+            // attach handlers now that DOM (including modal) is parsed
+            initGrid();
+            // populate breadcrumbs (if present) for small/portrait layouts
+            const nav = document.getElementById('breadcrumbs');
+            if (nav) {
+                nav.innerHTML = '';
+                DAY_NAMES.forEach((d, i) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.textContent = FULL_DAY_NAMES[i];
+                    btn.dataset.day = d;
+                    btn.addEventListener('click', () => {
+                        overrideDay = d;
+                        setActiveBreadcrumb(d);
+                        loadAndRenderAll();
+                    });
+                    nav.appendChild(btn);
+                });
+                // mark today's breadcrumb active by default
+                const jsDay = new Date().getDay();
+                const todayShort = jsDay === 0 ? 'Sun' : DAY_NAMES[jsDay - 1];
+                setActiveBreadcrumb(overrideDay || todayShort);
+            }
+
+            loadAndRenderAll();
+        });
+
+            </script>
+
+        </html>
+
+
+    </body>
+
+</html>
